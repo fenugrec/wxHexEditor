@@ -573,8 +573,8 @@ bool FAL::Apply( void ){
 
 					//if memory process
 					if ( ProcessID >=0 ){
-						int wr=0;
-						long word=0;
+						unsigned long wr=0;
+						unsigned long word=0;
 					#ifdef __WXMSW__
 						SIZE_T written=0;
 					#endif
@@ -590,19 +590,19 @@ bool FAL::Apply( void ){
 								wxMessageBox( _("Error on Write operation to Process RAM"), _("FATAL ERROR") );
 							wr += 4;
 							}
-						success*=true;
+						success &= true;
 						}
 					//disk block devices:
 					else{
 						wxFile::Seek(StartSector*BlockRWSize);
-						success*=Write(bfr, rd_size);//*= to make update success true or false
+						success &= Write(bfr, rd_size);//&= to make update success true or false
 
 						}
 					delete [] bfr;
 					}
 				else{
 					//if already written and makeing undo, than use old_data
-					success*=Write((DiffArray[i]->flag_commit ? DiffArray[i]->old_data : DiffArray[i]->new_data), DiffArray[i]->size);
+					success &= Write((DiffArray[i]->flag_commit ? DiffArray[i]->old_data : DiffArray[i]->new_data), DiffArray[i]->size);
 					}
 				if( success )
 					DiffArray[i]->flag_commit = DiffArray[i]->flag_commit ? false : true;	//alter state of commit flag
@@ -729,7 +729,7 @@ wxFileOffset FAL::Length( int PatchIndice ){
 
 	if(PatchIndice == -1)
 		PatchIndice = DiffArray.GetCount();
-	for( unsigned i=0 ; i < PatchIndice; i++ )
+	for( int i=0 ; i < PatchIndice; i++ )
 		if( DiffArray[i]->flag_undo && !DiffArray[i]->flag_commit )
 			continue;
 		else if( DiffArray[i]->flag_inject )
@@ -757,11 +757,11 @@ void FAL::ApplyXOR( unsigned char* buffer, unsigned size, uint64_t from ){
 		}
 	}
 
-long FAL::Read( char* buffer, int size){
+long FAL::Read( char* buffer, unsigned size){
 	return Read( reinterpret_cast<unsigned char*>(buffer), size);
 	}
 
-long FAL::Read( unsigned char* buffer, int size ){
+long FAL::Read( unsigned char* buffer, unsigned size ){
 	//Why did I calculate j here? To find active patch indice...
 	int j=0;
 	for( unsigned i=0 ; i < DiffArray.GetCount() ; i++)

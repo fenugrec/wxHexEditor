@@ -21,7 +21,7 @@
 *               email : spamjunkeater@gmail.com                         *
 *************************************************************************/
 
-#define NANINT 0xFFFFFFFFFFFFFFFFLL
+#define NANINT (-1)
 #include "HexDialogs.h"
 #include <wx/progdlg.h>
 #include "../mhash/include/mhash.h"
@@ -68,7 +68,7 @@ bool HexVerifyAndPrepare(wxString& hexval, wxString Value_Name, wxWindow* parent
    if( hexval.Len() < 2 )
       return false;
    //Remove all space chars and update the Search value
-   while( hexval.find(' ') != -1 )
+   while( hexval.find(' ') != (size_t) -1 )
       hexval.Remove( hexval.find(' '),1);
 
    for( unsigned i = 0 ; i < hexval.Len() ; i++ )
@@ -472,12 +472,12 @@ void FindDialog::FindSomeBytes( void ){
 
 	uint64_t current_offset = parent->CursorOffset();
 	unsigned BlockSz= 10*1024*1024;
-	int search_step = findfile->Length() < BlockSz ? findfile->Length() : BlockSz ;
+	unsigned search_step = findfile->Length() < BlockSz ? findfile->Length() : BlockSz ;
 	findfile->Seek( current_offset, wxFromStart );
 	char* buffer = new char [search_step];
 	if(buffer == NULL) return;
 	// TODO (death#6#): insert error check message here
-	int readed = 0;
+	unsigned readed = 0;
 	char diff_search;
 	findfile->Read( &diff_search, 1);
 	time_t ts,te;
@@ -516,7 +516,7 @@ void FindDialog::FindSomeBytes( void ){
 			findfile->Seek( current_offset, wxFromStart );
 			readed = findfile->Read( buffer , search_step );
 			read_speed += readed;
-			for( int i=0; i < readed ; i++)
+			for( unsigned i=0; i < readed ; i++)
 				if( buffer[i] != diff_search ){
 					parent->Goto( current_offset+i );
 					//Destroy();
@@ -809,7 +809,6 @@ uint64_t FindDialog::FindBinaryForward(wxMemoryBuffer target, uint64_t from , ui
 		return -1;
 		}
 
-	bool first_run=true;
 	wxString emsg = gauge_msg + wxT("\n") ;
 	uint64_t current_offset = from;
 
@@ -833,7 +832,7 @@ uint64_t FindDialog::FindBinaryForward(wxMemoryBuffer target, uint64_t from , ui
 	time (&ts);
 	te=ts;
 	int found = -1, readed = -1,readed_prefetch = -1;
-	unsigned read_speed=0,percentage=0;
+	unsigned percentage=0;
 	uint64_t read_speed_offset=0,processfootprint=0;
 
 	if( findfile->IsProcess() )
@@ -990,7 +989,7 @@ uint64_t FindDialog::FindBinaryForward(wxMemoryBuffer target, uint64_t from , ui
 
 	delete [] buffer;
 	delete [] buffer_prefetch;
-	if (! options & SEARCH_FINDALL)
+	if (! (options & SEARCH_FINDALL))
 		return found;
 
 	//Create tags from results and put them into HighlightArray
@@ -1019,7 +1018,6 @@ uint64_t FindDialog::FindBinaryBackward(wxMemoryBuffer target, uint64_t from , u
 		wxSwap( current_offset, end_offset);
 	uint64_t backward_offset = current_offset;
 
-	bool first_search=true;
 	unsigned BlockSz= 1024*1024*1;
 	unsigned search_step = findfile->Length() < BlockSz ? findfile->Length() : BlockSz ;
 
@@ -1042,7 +1040,7 @@ uint64_t FindDialog::FindBinaryBackward(wxMemoryBuffer target, uint64_t from , u
 	std::vector< int > partial_results;
 
 	unsigned read_speed=0,percentage=0;
-	uint64_t read_speed_offset=0,processfootprint=0;
+	uint64_t processfootprint=0;
 	if( findfile->IsProcess() )
 		processfootprint = parent->ProcessRAM_GetFootPrint();
 	do{
@@ -1131,13 +1129,14 @@ uint64_t FindDialog::FindBinaryBackward(wxMemoryBuffer target, uint64_t from , u
 			percentage =  (findfile->Length()-totalread)*1000/findfile->Length();
 			percentage = percentage > 1000 ? 1000 : percentage;
 			}
-		if( progress_gauge != NULL)
-		if(first_run){
-			if( ! progress_gauge->Update( percentage) );		// update progress and break on abort
-				break;
+		if( progress_gauge != NULL) {
+			if(first_run){
+				if( ! progress_gauge->Update( percentage) );		// update progress and break on abort
+					break;
 				}
-		else if( ! progress_gauge->Update( percentage, emsg))		// update progress and break on abort
-			break;
+			else if( ! progress_gauge->Update( percentage, emsg))		// update progress and break on abort
+				break;
+			}
 #endif //_DEBUG_FIND_UNIT_TEST_
 		}while(backward_offset > end_offset);
 

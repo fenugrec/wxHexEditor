@@ -162,8 +162,8 @@ class FAL : private wxFile
 				return true;
 			return wxFile::IsOpened(); };
 		int  fd() const { return wxFile::fd(); };
-virtual	long Read( char* buffer, int size );
-virtual	long Read( unsigned char* buffer, int size );
+virtual	long Read( char* buffer, unsigned size );
+virtual	long Read( unsigned char* buffer, unsigned size );
 		void SetXORKey( wxMemoryBuffer );
 		wxMemoryBuffer GetXORKey( void );
 		void ApplyXOR( unsigned char* buffer, unsigned size, uint64_t from );
